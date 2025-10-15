@@ -1,0 +1,7 @@
+{
+  "name": "recordapp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}

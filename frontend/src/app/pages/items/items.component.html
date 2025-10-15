@@ -1,0 +1,18 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Ítems de la Lista {{ listId }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-list>
+    <ion-item *ngFor="let item of items">
+      {{ item }}
+    </ion-item>
+  </ion-list>
+
+  <ion-item>
+    <ion-input placeholder="Nuevo ítem" [(ngModel)]="newItem"></ion-input>
+    <ion-button (click)="addItem()">Agregar</ion-button>
+  </ion-item>
+</ion-content>
