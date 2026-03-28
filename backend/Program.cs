@@ -1,15 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using RecordApp.Api.Data;
 using RecordApp.Api.Models;
+using RecordApp.Services;
+using Npgsql.EntityFrameworkCore.PostgreSQL; 
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=records.db"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
+builder.Services.AddScoped<NoteService>();
+
 
 var app = builder.Build();
 
@@ -22,47 +27,25 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors();
 
-// POST /notes — Create a note
-app.MapPost("/notes", async (Note note, AppDbContext db) =>
+app.MapGet("/notes", async (NoteService svc) =>
+    Results.Ok(await svc.GetAllAsync()));
+
+app.MapPost("/notes", async (Note note, NoteService svc) =>
 {
-    note.CreatedAt = DateTime.UtcNow;
-    db.Notes.Add(note);
-    await db.SaveChangesAsync();
-    return Results.Created($"/notes/{note.Id}", note);
+    var created = await svc.CreateAsync(note);
+    return Results.Created($"/notes/{created.Id}", created);
 });
 
-// GET /notes — List all notes
-app.MapGet("/notes", async (AppDbContext db) =>
+app.MapPut("/notes/{id}", async (int id, Note updated, NoteService svc) =>
 {
-    var notes = await db.Notes
-        .OrderByDescending(n => n.CreatedAt)
-        .ToListAsync();
-    return Results.Ok(notes);
+    var note = await svc.UpdateAsync(id, updated);
+    return note is null ? Results.NotFound() : Results.Ok(note);
 });
 
-// DELETE /notes/{id} — Delete a note
-app.MapDelete("/notes/{id}", async (int id, AppDbContext db) =>
+app.MapDelete("/notes/{id}", async (int id, NoteService svc) =>
 {
-    var note = await db.Notes.FindAsync(id);
-    if (note is null) return Results.NotFound();
-
-    db.Notes.Remove(note);
-    await db.SaveChangesAsync();
-    return Results.NoContent();
-});
-
-// PUT /notes/{id} — Edit a note (optional MVP)
-app.MapPut("/notes/{id}", async (int id, Note updated, AppDbContext db) =>
-{
-    var note = await db.Notes.FindAsync(id);
-    if (note is null) return Results.NotFound();
-
-    note.Title = updated.Title;
-    note.Content = updated.Content;
-    note.Color = updated.Color;
-
-    await db.SaveChangesAsync();
-    return Results.Ok(note);
+    var deleted = await svc.DeleteAsync(id);
+    return deleted ? Results.NoContent() : Results.NotFound();
 });
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
