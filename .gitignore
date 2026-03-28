@@ -35,6 +35,7 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+appsettings.Development.json
 
 # -----------------------------
 # Database (SQLite)
