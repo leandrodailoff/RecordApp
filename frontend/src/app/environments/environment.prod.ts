@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:5000' // replace with your production URL when ready
+  apiUrl: 'https://acordapp-bbezb6dzgdhufkc4.canadacentral-01.azurewebsites.net'
 };
