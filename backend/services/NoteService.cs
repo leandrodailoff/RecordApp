@@ -14,6 +14,7 @@ public class NoteService(AppDbContext db)
 
     public async Task<Note> CreateAsync(Note note)
     {
+        Validate(note);
         note.CreatedAt = DateTime.UtcNow;
         db.Notes.Add(note);
         await db.SaveChangesAsync();
@@ -25,6 +26,7 @@ public class NoteService(AppDbContext db)
         var note = await db.Notes.FindAsync(id);
         if (note is null) return null;
 
+        Validate(updated);
         note.Title = updated.Title;
         note.Content = updated.Content;
         note.Color = updated.Color;
@@ -41,5 +43,17 @@ public class NoteService(AppDbContext db)
         db.Notes.Remove(note);
         await db.SaveChangesAsync();
         return true;
+    }
+
+    private static void Validate(Note note)
+    {
+        if (string.IsNullOrWhiteSpace(note.Title))
+            throw new ArgumentException("Title is required.");
+
+        if (note.Title.Length > 100)
+            throw new ArgumentException("Title cannot exceed 100 characters.");
+
+        if (note.Content.Length > 2000)
+            throw new ArgumentException("Content cannot exceed 2000 characters.");
     }
 }
