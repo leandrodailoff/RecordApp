@@ -27,6 +27,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors();
 
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
 app.MapGet("/notes", async (NoteService svc) =>
     Results.Ok(await svc.GetAllAsync()));
 
