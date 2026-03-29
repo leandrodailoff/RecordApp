@@ -12,7 +12,7 @@ import { Note } from '../../models/note.model';
   styleUrl: './notes.component.css'
 })
 export class NotesComponent implements OnInit {
-  private noteService = inject(NoteService);
+  noteService = inject(NoteService);
   private cdr = inject(ChangeDetectorRef);
 
   notes: Note[] | null = null;
@@ -25,14 +25,14 @@ export class NotesComponent implements OnInit {
   rotations = ['-1.5deg','1deg','-0.5deg','2deg','-2deg','0.8deg','-1.2deg','1.8deg'];
 
   ngOnInit(): void {
-    // 1. Load from cache immediately — no skeleton if cache exists
+    this.noteService.checkColdStart();
+
     const cached = this.noteService.getFromCache();
     if (cached) {
       this.notes = cached;
       this.cdr.detectChanges();
     }
 
-    // 2. Fetch from API in parallel — update UI silently with fresh data
     this.noteService.getAll().subscribe(notes => {
       this.notes = [...notes];
       this.cdr.detectChanges();

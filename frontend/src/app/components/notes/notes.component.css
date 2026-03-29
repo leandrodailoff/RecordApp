@@ -253,3 +253,13 @@
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+.cold-start-banner {
+  background: #fff3cd;
+  color: #856404;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
