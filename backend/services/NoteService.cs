@@ -7,7 +7,10 @@ namespace RecordApp.Services;
 public class NoteService(AppDbContext db)
 {
     public async Task<List<Note>> GetAllAsync() =>
-        await db.Notes.OrderByDescending(n => n.CreatedAt).ToListAsync();
+        await db.Notes
+            .Where(n => !n.IsDeleted)
+            .OrderByDescending(n => n.CreatedAt)
+            .ToListAsync();
 
     public async Task<Note?> GetByIdAsync(int id) =>
         await db.Notes.FindAsync(id);
@@ -40,7 +43,7 @@ public class NoteService(AppDbContext db)
         var note = await db.Notes.FindAsync(id);
         if (note is null) return false;
 
-        db.Notes.Remove(note);
+        note.IsDeleted = true;
         await db.SaveChangesAsync();
         return true;
     }
