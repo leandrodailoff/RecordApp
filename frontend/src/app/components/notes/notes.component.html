@@ -1,4 +1,3 @@
-
 <div class="page">
 
   <header class="header">
@@ -21,9 +20,25 @@
   <main class="main">
 
     @if (noteService.isColdStart()) {
-    <div class="cold-start-banner">
-      ⏳ Backend waking up, hang tight...
-    </div>
+      <div class="cold-start-banner">
+        ⏳ Backend waking up, hang tight...
+      </div>
+    }
+
+    <!-- Search & Sort -->
+    @if (notes !== null && notes.length > 0) {
+      <div class="toolbar">
+        <input
+          class="search-input"
+          [(ngModel)]="searchQuery"
+          placeholder="🔍 Search notes..."
+        />
+        <select class="sort-select" [(ngModel)]="sortBy">
+          <option value="date">Date</option>
+          <option value="title">Title</option>
+          <option value="color">Color</option>
+        </select>
+      </div>
     }
 
     <!-- Create form -->
@@ -46,78 +61,88 @@
       </div>
     </div>
 
-<!-- Loading skeletons -->
-@if (notes === null) {
-  <div class="board">
-    <div class="note-card skeleton-card" *ngFor="let s of [1,2,3,4,5,6]">
-      <div class="pin"></div>
-      <div class="sk sk-title"></div>
-      <div class="sk sk-line"></div>
-      <div class="sk sk-line sk-short"></div>
-      <div class="sk sk-line sk-shorter"></div>
-      <div class="note-footer">
-        <div class="sk sk-date"></div>
+    <!-- Loading skeletons -->
+    @if (notes === null) {
+      <div class="board">
+        <div class="note-card skeleton-card" *ngFor="let s of [1,2,3,4,5,6]">
+          <div class="pin"></div>
+          <div class="sk sk-title"></div>
+          <div class="sk sk-line"></div>
+          <div class="sk sk-line sk-short"></div>
+          <div class="sk sk-line sk-shorter"></div>
+          <div class="note-footer">
+            <div class="sk sk-date"></div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-}
+    }
 
-<!-- Empty -->
-@else if (notes.length === 0 && !showForm) {
-  <div class="empty">
-    <div class="empty-inner">
-      <p class="empty-title">Your board is empty</p>
-      <p class="empty-sub">Click <strong>+ New note</strong> to pin your first one</p>
-    </div>
-  </div>
-}
-
-<!-- Board -->
-@else {
-  <div class="board">
-    <div class="note-card"
-      *ngFor="let note of notes; let i = index"
-      [style.background]="note.color"
-      [style.--rot]="rotations[i % rotations.length]">
-
-      <div class="pin"></div>
-
-      <!-- View mode -->
-      <ng-container *ngIf="editingNote?.id !== note.id">
-        <h3 class="note-title">{{ note.title }}</h3>
-        <p class="note-content">{{ note.content }}</p>
-        <div class="note-footer">
-          <span class="note-date">{{ note.createdAt | date:'MMM d' }}</span>
-          <div class="note-actions">
-            <button class="note-btn" (click)="startEdit(note)" title="Edit">✎</button>
-            <button class="note-btn note-btn--del" (click)="deleteNote(note.id!)" title="Delete">✕</button>
-          </div>
+    <!-- Empty state — sin notas en absoluto -->
+    @else if (notes.length === 0 && !showForm) {
+      <div class="empty">
+        <div class="empty-inner">
+          <p class="empty-title">Your board is empty</p>
+          <p class="empty-sub">Click <strong>+ New note</strong> to pin your first one</p>
         </div>
-      </ng-container>
+      </div>
+    }
 
-      <!-- Edit mode -->
-      <ng-container *ngIf="editingNote?.id === note.id">
-        <input class="form-input" [(ngModel)]="editingNote!.title" placeholder="Title" />
-        <textarea class="form-input form-textarea" [(ngModel)]="editingNote!.content"
-          placeholder="Content"></textarea>
-        <div class="form-bottom">
-          <div class="palette">
-            <button *ngFor="let c of palette" class="swatch"
-              [style.background]="c"
-              [class.active]="editingNote!.color === c"
-              (click)="editingNote!.color = c">
-            </button>
-          </div>
-          <div class="edit-btns">
-            <button class="note-btn" (click)="cancelEdit()">✕</button>
-            <button class="btn-save" (click)="saveEdit()">Save</button>
-          </div>
+    <!-- Sin resultados de búsqueda -->
+    @else if (filteredNotes.length === 0 && searchQuery.trim()) {
+      <div class="empty">
+        <div class="empty-inner">
+          <p class="empty-title">No notes found</p>
+          <p class="empty-sub">Try a different search term</p>
         </div>
-      </ng-container>
+      </div>
+    }
 
-    </div>
-  </div>
-}
+    <!-- Board -->
+    @else {
+      <div class="board">
+        <div class="note-card"
+          *ngFor="let note of filteredNotes; let i = index"
+          [style.background]="note.color"
+          [style.--rot]="rotations[i % rotations.length]">
+
+          <div class="pin"></div>
+
+          <!-- View mode -->
+          <ng-container *ngIf="editingNote?.id !== note.id">
+            <h3 class="note-title">{{ note.title }}</h3>
+            <p class="note-content">{{ note.content }}</p>
+            <div class="note-footer">
+              <span class="note-date">{{ note.createdAt | date:'MMM d' }}</span>
+              <div class="note-actions">
+                <button class="note-btn" (click)="startEdit(note)" title="Edit">✎</button>
+                <button class="note-btn note-btn--del" (click)="deleteNote(note.id!)" title="Delete">✕</button>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Edit mode -->
+          <ng-container *ngIf="editingNote?.id === note.id">
+            <input class="form-input" [(ngModel)]="editingNote!.title" placeholder="Title" />
+            <textarea class="form-input form-textarea" [(ngModel)]="editingNote!.content"
+              placeholder="Content"></textarea>
+            <div class="form-bottom">
+              <div class="palette">
+                <button *ngFor="let c of palette" class="swatch"
+                  [style.background]="c"
+                  [class.active]="editingNote!.color === c"
+                  (click)="editingNote!.color = c">
+                </button>
+              </div>
+              <div class="edit-btns">
+                <button class="note-btn" (click)="cancelEdit()">✕</button>
+                <button class="btn-save" (click)="saveEdit()">Save</button>
+              </div>
+            </div>
+          </ng-container>
+
+        </div>
+      </div>
+    }
 
   </main>
 </div>
