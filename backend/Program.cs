@@ -2,31 +2,59 @@ using Microsoft.EntityFrameworkCore;
 using RecordApp.Api.Data;
 using RecordApp.Api.Models;
 using RecordApp.Services;
-using Npgsql.EntityFrameworkCore.PostgreSQL; 
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --------------------
+// DATABASE
+// --------------------
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
 
-builder.Services.AddCors(options =>
-    options.AddDefaultPolicy(policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
-
+// --------------------
+// SERVICES
+// --------------------
 builder.Services.AddScoped<NoteService>();
 
+// --------------------
+// CORS
+// --------------------
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin()
+               .AllowAnyHeader()
+               .AllowAnyMethod());
+});
 
 var app = builder.Build();
 
-// Create the database if it doesn't exist
-using (var scope = app.Services.CreateScope())
+// --------------------
+// ENVIRONMENT PIPELINE
+// --------------------
+
+// Dev-only behavior
+if (app.Environment.IsDevelopment())
 {
+    Console.WriteLine("Running in DEVELOPMENT mode");
+}
+
+// Create DB only in dev (opcional pero recomendado)
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.EnsureCreated();
 }
 
 app.UseCors();
 
+// --------------------
+// ENDPOINTS
+// --------------------
 app.MapGet("/notes", async (NoteService svc) =>
     Results.Ok(await svc.GetAllAsync()));
 
@@ -48,5 +76,7 @@ app.MapDelete("/notes/{id}", async (int id, NoteService svc) =>
     return deleted ? Results.NoContent() : Results.NotFound();
 });
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-app.Run($"http://0.0.0.0:{port}");
+// --------------------
+// RUN (CLEAN)
+// --------------------
+app.Run();
