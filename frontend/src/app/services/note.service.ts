@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { firstValueFrom, Observable, tap } from 'rxjs';
 import { Note } from '../models/note.model';
 import { environment } from '../environments/environment';
 
@@ -16,6 +16,24 @@ interface NoteCache {
 export class NoteService {
   private readonly apiUrl = `${environment.apiUrl}/notes`;
   private http = inject(HttpClient);
+
+  private coldStartThreshold = 3000; // ms
+  isColdStart = signal(false);
+
+  public async checkColdStart(): Promise<void> {
+    const start = Date.now();
+    try {
+      await firstValueFrom(this.http.get(`${environment.apiUrl}/health`, {
+        observe: 'response'
+      }));
+      if (Date.now() - start > this.coldStartThreshold) {
+        this.isColdStart.set(true);
+        setTimeout(() => this.isColdStart.set(false), 3000);
+      }
+    } catch {
+      // ignorar errores
+    }
+  }
 
   // Returns cached notes if they exist and are fresh, otherwise null
   getFromCache(): Note[] | null {
