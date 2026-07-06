@@ -24,6 +24,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 
 WORKDIR /app
 
+# Instalar curl
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
 # Crear usuario sin privilegios
 RUN adduser --disabled-password --gecos "" appuser
 
@@ -32,6 +37,10 @@ ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
 COPY --from=build /app/publish .
+
+# Health Check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl --fail http://localhost:8080/health/live || exit 1
 
 USER appuser
 
