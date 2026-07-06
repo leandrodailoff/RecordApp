@@ -1,0 +1,19 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: recordapp-backend
+
+    ports:
+      - "5213:8080"
+
+    env_file:
+      - .env
+
+    environment:
+      ConnectionStrings__DefaultConnection: ${CONNECTION_STRING}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+
+    restart: unless-stopped
