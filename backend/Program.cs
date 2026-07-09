@@ -4,7 +4,8 @@ using RecordApp.Api.Models;
 using RecordApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 // --------------------
 // DATABASE
 // --------------------
@@ -13,6 +14,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        builder.Configuration.GetConnectionString("DefaultConnection")!);
 
 // --------------------
 // SERVICES
@@ -32,6 +37,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.MapHealthChecks("/health/live");
+
+app.MapHealthChecks("/health/ready");
+
 // --------------------
 // ENVIRONMENT PIPELINE
 // --------------------
@@ -43,8 +52,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
-
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.MapGet("/notes", async (NoteService svc) =>
     Results.Ok(await svc.GetAllAsync()));
@@ -81,6 +88,11 @@ app.MapDelete("/notes/{id}", async (int id, NoteService svc) =>
     return deleted ? Results.NoContent() : Results.NotFound();
 });
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 // --------------------
 // RUN (CLEAN)
 // --------------------

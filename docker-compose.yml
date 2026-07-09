@@ -1,4 +1,20 @@
 services:
+  nginx:
+    image: nginx:1.29-alpine
+    container_name: recordapp-proxy
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+    depends_on:
+      - frontend
+      - backend
+
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -7,8 +23,8 @@ services:
     image: recordapp-backend
     container_name: recordapp-backend
 
-    ports:
-      - "5213:8080"
+    expose:
+      - "8080"
 
     env_file:
       - .env
@@ -27,8 +43,8 @@ services:
     image: recordapp-frontend
     container_name: recordapp-frontend
 
-    ports:
-      - "4200:80"
+    expose:
+      - "80"
 
     depends_on:
       - backend
