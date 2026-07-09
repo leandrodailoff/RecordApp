@@ -1,0 +1,16 @@
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: SSH@0
+  inputs:
+    sshEndpoint: 'RecordApp-VPS'
+    runOptions: 'inline'
+    inline: |
+      whoami
+      hostname
+      pwd
+      ls -la
