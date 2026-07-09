@@ -51,14 +51,6 @@ if (app.Environment.IsDevelopment())
     Console.WriteLine("Running in DEVELOPMENT mode");
 }
 
-// Create DB only in dev (opcional pero recomendado)
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-}
-
 app.UseCors();
 
 app.MapGet("/notes", async (NoteService svc) =>
